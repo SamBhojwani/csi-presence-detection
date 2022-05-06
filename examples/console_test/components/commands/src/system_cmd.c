@@ -20,7 +20,6 @@
 
 #include "esp_system.h"
 #include "esp_spi_flash.h"
-#include "esp_ota_ops.h"
 #include "esp_partition.h"
 #include "esp_console.h"
 
@@ -120,35 +119,6 @@ static void register_reset()
 }
 
 /**
- * @brief  A function which implements reset command.
- */
-static int fallback_func(int argc, char **argv)
-{
-    esp_err_t err = ESP_OK;
-    const esp_partition_t *partition = esp_ota_get_next_update_partition(NULL);
-
-    err = esp_ota_set_boot_partition(partition);
-
-    ESP_LOGI(TAG, "The next reboot will fall back to the previous version");
-
-    return err;
-}
-
-/**
- * @brief  Register fallback command.
- */
-static void register_fallback()
-{
-    const esp_console_cmd_t cmd = {
-        .command = "fallback",
-        .help = "Upgrade error back to previous version",
-        .hint = NULL,
-        .func = &fallback_func,
-    };
-    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
-}
-
-/**
  * @brief  A function which implements heap command.
  */
 static int heap_func(int argc, char **argv)
@@ -240,5 +210,4 @@ void cmd_register_system(void)
     register_heap();
     register_restart();
     register_reset();
-    register_fallback();
 }

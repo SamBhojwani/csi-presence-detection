@@ -1,9 +1,9 @@
-// Copyright 2021 Espressif Systems (Shanghai) PTE LTD
+// Copyright 2020 Espressif Systems (Shanghai) PTE LTD
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-//
+
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
@@ -14,22 +14,18 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+#include "argtable3/argtable3.h"
+#include "esp_console.h"
 
-bool mac_str2hex(const char *mac_str, uint8_t *mac_hex);
-float avg(const float *array, size_t len);
-float max(const float *array, size_t len, float percent);
-float trimmean(const float *array, size_t len, float percent);
+#ifdef __cplusplus
+extern "C" {
+#endif /**< _cplusplus */
 
 void cmd_register_ping(void);
 void cmd_register_system(void);
-void cmd_register_wifi(void);
-void cmd_register_csi(void);
-void cmd_register_detect(void);
+void cmd_register_wifi_config(void);
+void cmd_register_wifi_scan(void);
 
 #ifdef __cplusplus
 }
-#endif
+#endif /**< _cplusplus */

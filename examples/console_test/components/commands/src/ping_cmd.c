@@ -18,7 +18,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "nvs_flash.h"
-#include "cmd_system.h"
 #include "argtable3/argtable3.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
@@ -89,8 +88,8 @@ static void ping_cmd_on_end(esp_ping_handle_t hdl, void *args)
 }
 
 static struct {
-    struct arg_dbl *timeout;
-    struct arg_dbl *interval;
+    struct arg_int *timeout;
+    struct arg_int *interval;
     struct arg_int *data_size;
     struct arg_int *count;
     struct arg_int *tos;
@@ -117,29 +116,42 @@ static int wifi_cmd_ping(int argc, char **argv)
     }
 
     if (ping_args.timeout->count > 0) {
-        config.timeout_ms = (uint32_t)(ping_args.timeout->dval[0] * 1000);
+        config.timeout_ms = ping_args.timeout->ival[0];
     }
 
     if (ping_args.interval->count > 0) {
-        config.interval_ms = (uint32_t)(ping_args.interval->dval[0] * 1000);
+        config.interval_ms = ping_args.interval->ival[0];
     }
 
     if (ping_args.data_size->count > 0) {
-        config.data_size = (uint32_t)(ping_args.data_size->ival[0]);
+        config.data_size = ping_args.data_size->ival[0];
     }
 
     if (ping_args.count->count > 0) {
-        config.count = (uint32_t)(ping_args.count->ival[0]);
+        config.count = ping_args.count->ival[0];
     }
 
     if (ping_args.tos->count > 0) {
-        config.tos = (uint32_t)(ping_args.tos->ival[0]);
+        config.tos = ping_args.tos->ival[0];
     }
 
     if (ping_args.abort->count > 0) {
         esp_ping_stop(g_ping_handle);
         esp_ping_delete_session(g_ping_handle);
+
+        ESP_LOGW(TAG, "esp_ping stop");
         return ESP_OK;
+    }
+
+    char host[32] = {0};
+
+    if (ping_args.host->count > 0) {
+        strcpy(host, ping_args.host->sval[0]);
+    } else {
+        esp_netif_ip_info_t local_ip;
+        esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &local_ip);
+        sprintf(host, IPSTR, IP2STR(&local_ip.gw));
+        ESP_LOGI(TAG, "ping router ip:" IPSTR ", gw: " IPSTR, IP2STR(&local_ip.ip), IP2STR(&local_ip.gw));
     }
 
     // parse IP address
@@ -147,17 +159,17 @@ static int wifi_cmd_ping(int argc, char **argv)
     ip_addr_t target_addr;
     memset(&target_addr, 0, sizeof(target_addr));
 
-    if (inet_pton(AF_INET6, ping_args.host->sval[0], &sock_addr6.sin6_addr) == 1) {
+    if (inet_pton(AF_INET6, host, &sock_addr6.sin6_addr) == 1) {
         /* convert ip6 string to ip6 address */
-        ipaddr_aton(ping_args.host->sval[0], &target_addr);
+        ipaddr_aton(host, &target_addr);
     } else {
         struct addrinfo hint;
         struct addrinfo *res = NULL;
         memset(&hint, 0, sizeof(hint));
 
         /* convert ip4 string or hostname to ip4 or ip6 address */
-        if (getaddrinfo(ping_args.host->sval[0], NULL, &hint, &res) != 0) {
-            printf("ping: unknown host %s\n", ping_args.host->sval[0]);
+        if (getaddrinfo(host, NULL, &hint, &res) != 0) {
+            printf("ping: unknown host %s\n", host);
             return ESP_FAIL;
         }
 
@@ -190,14 +202,14 @@ static int wifi_cmd_ping(int argc, char **argv)
 
 void cmd_register_ping(void)
 {
-    ping_args.timeout   = arg_dbl0("W", "timeout", "<t>", "Time to wait for a response, in seconds");
-    ping_args.interval  = arg_dbl0("i", "interval", "<t>", "Wait interval seconds between sending each packet");
+    ping_args.timeout   = arg_int0("W", "timeout", "<t>", "Time to wait for a response, in seconds");
+    ping_args.interval  = arg_int0("i", "interval", "<t>", "Wait interval seconds between sending each packet");
     ping_args.data_size = arg_int0("s", "size", "<n>", "Specify the number of data bytes to be sent");
     ping_args.count     = arg_int0("c", "count", "<n>", "Stop after sending count packets");
     ping_args.tos       = arg_int0("Q", "tos", "<n>", "Set Type of Service related bits in IP datagrams");
-    ping_args.host      = arg_str1(NULL, NULL, "<host>", "Host address");
+    ping_args.host      = arg_str0("h", "host", "<host>", "Host address");
     ping_args.abort     = arg_lit0("a", "abort", "Abort running ping");
-    ping_args.end       = arg_end(1);
+    ping_args.end       = arg_end(10);
     const esp_console_cmd_t ping_cmd = {
         .command = "ping",
         .help = "Send ICMP ECHO_REQUEST to network hosts",
