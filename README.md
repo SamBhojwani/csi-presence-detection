@@ -1,4 +1,4 @@
-# ESP-CSI
+# ESP-CSI [[中文]](./README_cn.md)
 
 The main purpose of this project is to show the use of ESP-WIFI-CSI. The human body detection algorithm is still being optimized. You can get more accurate results through machine learning, neural network and other algorithms based on the original CSI data.
 
@@ -8,7 +8,14 @@ The main purpose of this project is to show the use of ESP-WIFI-CSI. The human b
 
 Channel state information (CSI) includes specific indicators such as carrier signal strength, amplitude, phase, and signal delay. These indicators reveal the signal scattering, reflection, and power attenuation phenomena that occur with the carrier as the transmission distance changes. It can be used to measure the channel status of the wireless network in Wi-Fi communication. By analyzing and studying the changes in CSI, we can conversely speculate on the changes in the physical environment that cause the changes in the channel state, that is, to achieve non-contact intelligent sensing. CSI is extremely sensitive to environmental changes. In addition to perceiving environmental changes caused by large movements such as walking and running of people or animals, it can also capture subtle movements caused by small movements such as breathing and chewing of people or animals in a static environment.
 
-### 1.2 The relationship between CSI and RSSI
+### 1.2 Utilization of Subcarriers for CSI
+CSI (Channel State Information) can extract channel information through subcarriers due to the utilization of techniques like Orthogonal Frequency Division Multiplexing (OFDM) and Orthogonal Frequency Division Multiplexing Multiple Input Multiple Output (OFDM-MIMO).
+OFDM divides the spectrum into multiple orthogonal subcarriers, allowing independent data transmission across each subcarrier. This orthogonality minimizes interference between subcarriers, enhancing spectrum efficiency and interference resilience.
+In OFDM-MIMO systems, multiple antennas simultaneously transmit different data streams. These streams undergo channel propagation effects such as multipath fading before reaching the receiver. As each subcarrier experiences different channel effects, exploiting the characteristics of these subcarriers allows extraction of channel information. By analyzing the differences between transmitted and received signals across various subcarriers, including their amplitude and phase shifts, CSI can be derived.
+Thus, CSI's ability to extract channel information through subcarriers stems from the properties of OFDM and MIMO technologies, leveraging signal variations across multiple subcarriers and antennas to infer channel state information.
+To learn more about the principle of OFDM, the underlying technology of WiFi transport, please read this chapter:
+
+### 1.3 The relationship between CSI and RSSI
 
 1. **Level of detail:** CSI provides more detailed information about the wireless channel, including amplitude, phase, and frequency response. RSSI, on the other hand, only provides a general measurement of signal strength.
 
@@ -20,14 +27,14 @@ Channel state information (CSI) includes specific indicators such as carrier sig
 
 In summary, Wi-Fi CSI provides more detailed and fine-grained information about the wireless channel, while RSSI is a simpler measurement of signal strength. CSI enables more advanced applications but requires more sophisticated hardware and analysis techniques.
 
-### 1.3 Advantages of CSI
+### 1.4 Advantages of CSI
 
 CSI is a physical layer characteristic. Compared with other indicators, CSI amplitude shows some advantages:
 
 1. **Anti-interference:** CSI amplitude is essentially the attenuation coefficient of a set of channels. As long as the channel itself does not change, it is quite robust to interference from power adaptors and other jumpers.
 2. **More fine-grained:** CSI does not use synthetic values ​​(such as RSSI) to measure the channel, but decomposes the entire channel measurement into sub-carriers, and estimates the frequency response of each sub-carrier, so as to determine the channel in the frequency domain. Make a more fine-grained description.
 
-### 1.4 Espressif CSI Advantage
+### 1.5 Espressif CSI Advantage
 
 1. **All ESP32 series support CSI:** ESP32 / ESP32-S2 / ESP32-C3 / ESP32-S3 / ESP32-C6.
 2. **Powerful ecology:** Espressif is a global leader in the field of Wi-Fi MCUs, combining CSI with existing IOT equipment.
