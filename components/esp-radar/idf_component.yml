@@ -13,6 +13,9 @@ targets:
 dependencies:
   idf: ">=4.4.1"
   cmake_utilities: "0.*"
+  esp_csi_gain_ctrl:
+    version: "1.0.0"
+    override_path: ../esp_csi_gain_ctrl
 examples:
   - path: ../../examples/esp-radar/connect_rainmaker
   - path: ../../examples/esp-radar/console_test
