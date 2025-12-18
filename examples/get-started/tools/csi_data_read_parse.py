@@ -1,19 +1,8 @@
 #!/usr/bin/env python3
 # -*-coding:utf-8-*-
 
-# Copyright 2021 Espressif Systems (Shanghai) PTE LTD
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-FileCopyrightText: 2021-2025 Espressif Systems (Shanghai) CO LTD
+# SPDX-License-Identifier: Apache-2.0
 #
 
 # WARNING: we don't check for Python build-time dependencies until
@@ -51,9 +40,9 @@ csi_vaid_subcarrier_len =0
 
 CSI_DATA_INDEX = 200  # buffer size
 CSI_DATA_COLUMNS = 490
-DATA_COLUMNS_NAMES_C5C6 = ["type", "id", "mac", "rssi", "rate","noise_floor","fft_gain","agc_gain", "channel", "local_timestamp",  "sig_len", "rx_state", "len", "first_word", "data"]
-DATA_COLUMNS_NAMES = ["type", "id", "mac", "rssi", "rate", "sig_mode", "mcs", "bandwidth", "smoothing", "not_sounding", "aggregation", "stbc", "fec_coding",
-                      "sgi", "noise_floor", "ampdu_cnt", "channel", "secondary_channel", "local_timestamp", "ant", "sig_len", "rx_state", "len", "first_word", "data"]
+DATA_COLUMNS_NAMES_C5C6 = ['type', 'id', 'mac', 'rssi', 'rate','noise_floor','fft_gain','agc_gain', 'channel', 'local_timestamp',  'sig_len', 'rx_state', 'len', 'first_word', 'data']
+DATA_COLUMNS_NAMES = ['type', 'id', 'mac', 'rssi', 'rate', 'sig_mode', 'mcs', 'bandwidth', 'smoothing', 'not_sounding', 'aggregation', 'stbc', 'fec_coding',
+                      'sgi', 'noise_floor', 'ampdu_cnt', 'channel', 'secondary_channel', 'local_timestamp', 'ant', 'sig_len', 'rx_state', 'len', 'first_word', 'data']
 
 csi_data_array = np.zeros(
     [CSI_DATA_INDEX, CSI_DATA_COLUMNS], dtype=np.float64)
@@ -74,27 +63,27 @@ class csi_data_graphical_window(QWidget):
         self.plotWidget_ted.setGeometry(QtCore.QRect(0, 0, 640, 300))
         self.plotWidget_ted.setYRange(-2*np.pi, 2*np.pi)
         self.plotWidget_ted.addLegend()
-        self.plotWidget_ted.setTitle("Phase Data - Last Frame")  # 添加标题
+        self.plotWidget_ted.setTitle('Phase Data - Last Frame')  # 添加标题
         self.plotWidget_ted.setLabel('left', 'Phase (rad)')  # Y轴标签
         self.plotWidget_ted.setLabel('bottom', 'Subcarrier Index')  # X轴标签
 
         self.csi_amplitude_array = np.abs(csi_data_complex)
         self.csi_phase_array = np.angle(csi_data_complex)
-        self.curve = self.plotWidget_ted.plot([], name="CSI Row Data", pen='r')
+        self.curve = self.plotWidget_ted.plot([], name='CSI Row Data', pen='r')
 
         self.plotWidget_multi_data = PlotWidget(self)
         self.plotWidget_multi_data.setGeometry(QtCore.QRect(0, 300, 1280, 300))
         self.plotWidget_multi_data.getViewBox().enableAutoRange(axis=pg.ViewBox.YAxis)
         self.plotWidget_multi_data.addLegend()
-        self.plotWidget_multi_data.setTitle("Subcarrier Amplitude Data")  # 添加标题
+        self.plotWidget_multi_data.setTitle('Subcarrier Amplitude Data')  # 添加标题
         self.plotWidget_multi_data.setLabel('left', 'Amplitude')  # Y轴标签
         self.plotWidget_multi_data.setLabel('bottom', 'Time (Cumulative Packet Count)')  # X轴标签
 
         self.curve_list = []
         agc_curve = self.plotWidget_multi_data.plot(
-            agc_gain_data, name="AGC Gain", pen=[255,255,0])
+            agc_gain_data, name='AGC Gain', pen=[255,255,0])
         fft_curve = self.plotWidget_multi_data.plot(
-            fft_gain_data, name="FFT Gain", pen=[255,255,0])
+            fft_gain_data, name='FFT Gain', pen=[255,255,0])
         self.curve_list.append(agc_curve)
         self.curve_list.append(fft_curve)
 
@@ -109,7 +98,7 @@ class csi_data_graphical_window(QWidget):
         self.plotWidget_phase_data.setGeometry(QtCore.QRect(0, 600, 1280, 300))
         self.plotWidget_phase_data.getViewBox().enableAutoRange(axis=pg.ViewBox.YAxis)
         self.plotWidget_phase_data.addLegend()
-        self.plotWidget_multi_data.setTitle("Subcarrier Phase Data")  # 添加标题
+        self.plotWidget_multi_data.setTitle('Subcarrier Phase Data')  # 添加标题
         self.plotWidget_multi_data.setLabel('left', 'Phase (rad)')  # Y轴标签
         self.plotWidget_multi_data.setLabel('bottom', 'Time (Cumulative Packet Count)')  # X轴标签
 
@@ -119,14 +108,14 @@ class csi_data_graphical_window(QWidget):
             phase_curve = self.plotWidget_phase_data.plot(
                 np.angle(self.csi_amplitude_array[:, i]), name=str(i), pen=(255, 255, 255))
             self.curve_phase_list.append(phase_curve)
-        
+
 
         # IQ 图窗口
         self.plotWidget_iq = PlotWidget(self)
         self.plotWidget_iq.setGeometry(QtCore.QRect(640, 0, 640, 300))
         self.plotWidget_iq.setLabel('left', 'Q (Imag)')
         self.plotWidget_iq.setLabel('bottom', 'I (Real)')
-        self.plotWidget_iq.setTitle("IQ Plot - Last Frame")
+        self.plotWidget_iq.setTitle('IQ Plot - Last Frame')
         view_box = self.plotWidget_iq.getViewBox()
         view_box.setRange(QtCore.QRectF(-30, -30, 60, 60))  # 可以调整范围的大小，保证原点在中间
 
@@ -148,7 +137,7 @@ class csi_data_graphical_window(QWidget):
         self.iq_colors = color_list
         self.plotWidget_ted.setXRange(0, self.deta_len//2)
         for i in range(self.deta_len):
-            self.curve_list[i].setPen(color_list[i]) 
+            self.curve_list[i].setPen(color_list[i])
             self.curve_phase_list[i].setPen(color_list[i])
 
     def update_data(self):
@@ -169,46 +158,46 @@ class csi_data_graphical_window(QWidget):
 
         self.csi_amplitude_array = np.abs(csi_data_complex)
         self.csi_phase_array = np.angle(csi_data_complex)
-        self.csi_row_data = self.csi_phase_array[-1, :] 
-        
-        self.curve.setData(self.csi_row_data) 
+        self.csi_row_data = self.csi_phase_array[-1, :]
+
+        self.curve.setData(self.csi_row_data)
 
         self.curve_list[CSI_DATA_COLUMNS].setData(agc_gain_data)
         self.curve_list[CSI_DATA_COLUMNS+1].setData(fft_gain_data)
-        
+
         for i in range(CSI_DATA_COLUMNS):
             self.curve_list[i].setData(self.csi_amplitude_array[:, i])
-            self.curve_phase_list[i].setData(self.csi_phase_array[:, i])   
+            self.curve_phase_list[i].setData(self.csi_phase_array[:, i])
 
 def generate_subcarrier_colors(red_range, green_range, yellow_range, total_num,interval=1):
     colors = []
     for i in range(total_num):
         if red_range and red_range[0] <= i <= red_range[1]:
-            intensity = int(255 * (i - red_range[0]) / (red_range[1] - red_range[0])) 
-            colors.append((intensity, 0, 0)) 
+            intensity = int(255 * (i - red_range[0]) / (red_range[1] - red_range[0]))
+            colors.append((intensity, 0, 0))
         elif green_range and green_range[0] <= i <= green_range[1]:
-            intensity = int(255 * (i - green_range[0]) / (green_range[1] - green_range[0])) 
-            colors.append((0, intensity, 0)) 
+            intensity = int(255 * (i - green_range[0]) / (green_range[1] - green_range[0]))
+            colors.append((0, intensity, 0))
         elif yellow_range and yellow_range[0] <= i <= yellow_range[1]:
-            intensity = int(255 * (i - yellow_range[0]) / (yellow_range[1] - yellow_range[0])) 
-            colors.append((0, intensity, intensity)) 
+            intensity = int(255 * (i - yellow_range[0]) / (yellow_range[1] - yellow_range[0]))
+            colors.append((0, intensity, intensity))
         else:
-            colors.append((200, 200, 200))  
-    
+            colors.append((200, 200, 200))
+
     return colors
 
 
 def csi_data_read_parse(port: str, csv_writer, log_file_fd,callback=None):
     global fft_gains, agc_gains
-    ser = serial.Serial(port=port, baudrate=921600,bytesize=8, parity='N', stopbits=1)
+    set = serial.Serial(port=port, baudrate=921600,bytesize=8, parity='N', stopbits=1)
     count =0
-    if ser.isOpen():
-        print("open success")
+    if set.isOpen():
+        print('open success')
     else:
-        print("open failed")
+        print('open failed')
         return
     while True:
-        strings = str(ser.readline())
+        strings = str(set.readline())
         if not strings:
             break
         strings = strings.lstrip('b\'').rstrip('\\r\\n\'')
@@ -223,9 +212,9 @@ def csi_data_read_parse(port: str, csv_writer, log_file_fd,callback=None):
         csi_data = next(csv_reader)
         csi_data_len = int (csi_data[-3])
         if len(csi_data) != len(DATA_COLUMNS_NAMES) and len(csi_data) != len(DATA_COLUMNS_NAMES_C5C6):
-            print("element number is not equal",len(csi_data),len(DATA_COLUMNS_NAMES) )
+            print('element number is not equal',len(csi_data),len(DATA_COLUMNS_NAMES) )
             # print(csi_data)
-            log_file_fd.write("element number is not equal\n")
+            log_file_fd.write('element number is not equal\n')
             log_file_fd.write(strings + '\n')
             log_file_fd.flush()
             continue
@@ -233,21 +222,21 @@ def csi_data_read_parse(port: str, csv_writer, log_file_fd,callback=None):
         try:
             csi_raw_data = json.loads(csi_data[-1])
         except json.JSONDecodeError:
-            print("data is incomplete")
-            log_file_fd.write("data is incomplete\n")
+            print('data is incomplete')
+            log_file_fd.write('data is incomplete\n')
             log_file_fd.write(strings + '\n')
             log_file_fd.flush()
             continue
         if csi_data_len != len(csi_raw_data):
-            print("csi_data_len is not equal",csi_data_len,len(csi_raw_data))
-            log_file_fd.write("csi_data_len is not equal\n")
+            print('csi_data_len is not equal',csi_data_len,len(csi_raw_data))
+            log_file_fd.write('csi_data_len is not equal\n')
             log_file_fd.write(strings + '\n')
             log_file_fd.flush()
             continue
 
         fft_gain = int(csi_data[6])
         agc_gain = int(csi_data[7])
-        
+
         fft_gains.append(fft_gain)
         agc_gains.append(agc_gain)
 
@@ -261,18 +250,20 @@ def csi_data_read_parse(port: str, csv_writer, log_file_fd,callback=None):
         fft_gain_data[:-1] = fft_gain_data[1:]
         agc_gain_data[-1] = agc_gain
         fft_gain_data[-1] = fft_gain
-        
+
         if count ==0:
             count = 1
-            print("none",csi_data_len)
+            print('none',csi_data_len)
             if csi_data_len == 106:
                 colors = generate_subcarrier_colors((0,25), (27,53), None, len(csi_raw_data))
             elif  csi_data_len == 114:
                 colors = generate_subcarrier_colors((0,27), (29,56), None, len(csi_raw_data))
             elif  csi_data_len == 52:
-                colors = generate_subcarrier_colors((0,12), (13,26), None, len(csi_raw_data))   
+                colors = generate_subcarrier_colors((0,12), (13,26), None, len(csi_raw_data))
             elif  csi_data_len == 234 :
                 colors = generate_subcarrier_colors((0,28), (29,56), (60,116), len(csi_raw_data))
+            elif  csi_data_len == 228 :
+                colors = generate_subcarrier_colors((0,28), (29,57), (57,113), len(csi_raw_data))
             elif  csi_data_len == 490 :
                 colors = generate_subcarrier_colors((0,61), (62,122), (123,245), len(csi_raw_data))
             elif  csi_data_len == 128 :
@@ -283,16 +274,15 @@ def csi_data_read_parse(port: str, csv_writer, log_file_fd,callback=None):
                 colors = generate_subcarrier_colors((0,63), (64,127), (128,256), len(csi_raw_data))
             elif  csi_data_len == 384 :
                 colors = generate_subcarrier_colors((0,63), (64,127), (128,192), len(csi_raw_data))
-            else:
-                print("Please add more color schemes.")
-                count =0
-                continue
+            elif csi_data_len > 0 and csi_data_len <= 612:
+                raw_len = len(csi_raw_data)
+                colors = generate_subcarrier_colors((0,raw_len//2), (raw_len//2+1,raw_len-1), None, raw_len)
             callback(colors)
 
         for i in range(csi_data_len // 2):
             csi_data_complex[-1][i] = complex(csi_raw_data[i * 2 + 1],
                                             csi_raw_data[i * 2])
-    ser.close()
+    set.close()
     return
 
 
@@ -317,17 +307,17 @@ class SubThread (QThread):
 
 if __name__ == '__main__':
     if sys.version_info < (3, 6):
-        print(" Python version should >= 3.6")
+        print(' Python version should >= 3.6')
         exit()
 
     parser = argparse.ArgumentParser(
-        description="Read CSI data from serial port and display it graphically")
+        description='Read CSI data from serial port and display it graphically')
     parser.add_argument('-p', '--port', dest='port', action='store', required=True,
-                        help="Serial port number of csv_recv device")
+                        help='Serial port number of csv_recv device')
     parser.add_argument('-s', '--store', dest='store_file', action='store', default='./csi_data.csv',
-                        help="Save the data printed by the serial port to a file")
-    parser.add_argument('-l', '--log', dest="log_file", action="store", default="./csi_data_log.txt",
-                        help="Save other serial data the bad CSI data to a log file")
+                        help='Save the data printed by the serial port to a file')
+    parser.add_argument('-l', '--log', dest='log_file', action='store', default='./csi_data_log.txt',
+                        help='Save other serial data the bad CSI data to a log file')
 
     args = parser.parse_args()
     serial_port = args.port
