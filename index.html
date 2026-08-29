@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>ESP CSI Monitor</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            font-family: Arial, sans-serif;
+
+            background: #f5f5f5;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 30px;
+        }
+
+        .container {
+            width: 850px;
+            max-width: 100%;
+
+            background: white;
+
+            padding: 30px;
+
+            border-radius: 16px;
+
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+
+        .status {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .receiving {
+            color: #16803c;
+        }
+
+        .waiting {
+            color: #777;
+        }
+
+        .error {
+            color: #d32f2f;
+        }
+
+        .movement {
+            color: #1976d2;
+        }
+
+        .detected {
+            color: #d32f2f;
+        }
+
+        .values {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+
+            margin: 25px 0;
+        }
+
+        .value-box {
+            background: #f7f7f7;
+
+            padding: 18px;
+
+            border-radius: 10px;
+
+            text-align: center;
+        }
+
+        .label {
+            display: block;
+
+            font-size: 14px;
+
+            color: #777;
+
+            margin-bottom: 8px;
+        }
+
+        .number {
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        .graph-container {
+            margin-top: 25px;
+        }
+
+        .graph-title {
+            font-size: 17px;
+            font-weight: bold;
+
+            margin-bottom: 8px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 220px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 8px;
+
+            background: white;
+        }
+
+        .footer {
+            text-align: center;
+
+            margin-top: 20px;
+
+            font-size: 13px;
+
+            color: #888;
+        }
+
+        @media (max-width: 650px) {
+
+            .values {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <h1>ESP CSI Monitor</h1>
+
+
+    <!-- CONNECTION -->
+
+    <div id="connection"
+         class="status receiving">
+
+        🟢 CSI DATA AVAILABLE
+
+    </div>
+
+
+    <!-- MOVEMENT -->
+
+    <div id="movement"
+         class="status movement">
+
+        🔵 NO MOVEMENT
+
+    </div>
+
+
+    <!-- LIVE VALUES -->
+
+    <div class="values">
+
+        <div class="value-box">
+
+            <span class="label">
+                FRAMES
+            </span>
+
+            <span id="frames"
+                  class="number">
+
+                0
+
+            </span>
+
+        </div>
+
+
+        <div class="value-box">
+
+            <span class="label">
+                RSSI
+            </span>
+
+            <span id="rssi"
+                  class="number">
+
+                0
+
+            </span>
+
+            dBm
+
+        </div>
+
+
+        <div class="value-box">
+
+            <span class="label">
+                CSI CHANGE
+            </span>
+
+            <span id="score"
+                  class="number">
+
+                0
+
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- CSI CHANGE GRAPH -->
+
+    <div class="graph-container">
+
+        <div class="graph-title">
+            CSI CHANGE — LIVE
+        </div>
+
+        <canvas id="scoreGraph"></canvas>
+
+    </div>
+
+
+    <!-- RSSI GRAPH -->
+
+    <div class="graph-container">
+
+        <div class="graph-title">
+            RSSI — LIVE
+        </div>
+
+        <canvas id="rssiGraph"></canvas>
+
+    </div>
+
+
+    <div class="footer">
+
+        Updating every 300 ms
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /*
+     * ==========================================
+     * GRAPH SETTINGS
+     * ==========================================
+     */
+
+    const MAX_POINTS = 100;
+
+    const scoreHistory = [];
+    const rssiHistory = [];
+
+
+    /*
+     * ==========================================
+     * CANVAS SETUP
+     * ==========================================
+     */
+
+    const scoreCanvas =
+        document.getElementById("scoreGraph");
+
+    const rssiCanvas =
+        document.getElementById("rssiGraph");
+
+
+    function resizeCanvas(canvas) {
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+        const dpr =
+            window.devicePixelRatio || 1;
+
+        canvas.width =
+            rect.width * dpr;
+
+        canvas.height =
+            rect.height * dpr;
+
+        const ctx =
+            canvas.getContext("2d");
+
+        ctx.scale(dpr, dpr);
+
+    }
+
+
+    function resizeGraphs() {
+
+        resizeCanvas(scoreCanvas);
+        resizeCanvas(rssiCanvas);
+
+        drawScoreGraph();
+        drawRSSIGraph();
+
+    }
+
+
+    window.addEventListener(
+        "resize",
+        resizeGraphs
+    );
+
+
+    /*
+     * ==========================================
+     * GENERIC GRAPH DRAWING
+     * ==========================================
+     */
+
+    function drawGraph(
+        canvas,
+        values,
+        minValue,
+        maxValue,
+        label
+    ) {
+
+        const ctx =
+            canvas.getContext("2d");
+
+        const width =
+            canvas.clientWidth;
+
+        const height =
+            canvas.clientHeight;
+
+
+        ctx.clearRect(
+            0,
+            0,
+            width,
+            height
+        );
+
+
+        if (values.length < 2) {
+            return;
+        }
+
+
+        /*
+         * GRID
+         */
+
+        ctx.strokeStyle = "#e5e5e5";
+        ctx.lineWidth = 1;
+
+
+        for (let i = 1; i < 5; i++) {
+
+            const y =
+                (height / 5) * i;
+
+            ctx.beginPath();
+
+            ctx.moveTo(0, y);
+
+            ctx.lineTo(width, y);
+
+            ctx.stroke();
+
+        }
+
+
+        /*
+         * GRAPH LINE
+         */
+
+        ctx.strokeStyle = "#1976d2";
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+
+
+        for (
+            let i = 0;
+            i < values.length;
+            i++
+        ) {
+
+            const x =
+                (i / (values.length - 1))
+                * width;
+
+
+            const normalized =
+                (values[i] - minValue)
+                /
+                (maxValue - minValue);
+
+
+            const y =
+                height -
+                (normalized * height);
+
+
+            if (i === 0) {
+
+                ctx.moveTo(x, y);
+
+            } else {
+
+                ctx.lineTo(x, y);
+
+            }
+
+        }
+
+
+        ctx.stroke();
+
+
+        /*
+         * CURRENT VALUE
+         */
+
+        const latest =
+            values[values.length - 1];
+
+
+        ctx.fillStyle = "#333";
+
+        ctx.font = "13px Arial";
+
+        ctx.fillText(
+            label + ": " + latest.toFixed(1),
+            10,
+            20
+        );
+
+    }
+
+
+    /*
+     * ==========================================
+     * CSI SCORE GRAPH
+     * ==========================================
+     */
+
+    function drawScoreGraph() {
+
+        if (scoreHistory.length === 0) {
+            return;
+        }
+
+
+        const max =
+            Math.max(
+                20,
+                ...scoreHistory
+            );
+
+
+        drawGraph(
+            scoreCanvas,
+            scoreHistory,
+            0,
+            max * 1.15,
+            "CSI Change"
+        );
+
+    }
+
+
+    /*
+     * ==========================================
+     * RSSI GRAPH
+     * ==========================================
+     */
+
+    function drawRSSIGraph() {
+
+        if (rssiHistory.length === 0) {
+            return;
+        }
+
+
+        const min =
+            Math.min(
+                -100,
+                ...rssiHistory
+            );
+
+
+        const max =
+            Math.max(
+                -20,
+                ...rssiHistory
+            );
+
+
+        drawGraph(
+            rssiCanvas,
+            rssiHistory,
+            min,
+            max,
+            "RSSI"
+        );
+
+    }
+
+
+    /*
+     * ==========================================
+     * UPDATE GRAPH HISTORY
+     * ==========================================
+     */
+
+    function addData(
+        score,
+        rssi
+    ) {
+
+        scoreHistory.push(score);
+        rssiHistory.push(rssi);
+
+
+        if (
+            scoreHistory.length
+            >
+            MAX_POINTS
+        ) {
+
+            scoreHistory.shift();
+
+        }
+
+
+        if (
+            rssiHistory.length
+            >
+            MAX_POINTS
+        ) {
+
+            rssiHistory.shift();
+
+        }
+
+
+        drawScoreGraph();
+        drawRSSIGraph();
+
+    }
+
+
+    /*
+     * ==========================================
+     * FETCH DATA
+     * ==========================================
+     */
+
+    async function updateDashboard() {
+
+        try {
+
+            const response =
+                await fetch(
+                    "/data?t=" + Date.now(),
+                    {
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "HTTP " + response.status
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            /*
+             * VALUES
+             */
+
+            document.getElementById(
+                "frames"
+            ).textContent =
+                data.frames;
+
+
+            document.getElementById(
+                "rssi"
+            ).textContent =
+                data.rssi;
+
+
+            document.getElementById(
+                "score"
+            ).textContent =
+                data.score;
+
+
+            /*
+             * CONNECTION
+             */
+
+            const connection =
+                document.getElementById(
+                    "connection"
+                );
+
+
+            if (data.frames > 0) {
+
+                connection.textContent =
+                    "🟢 CSI DATA AVAILABLE";
+
+                connection.className =
+                    "status receiving";
+
+            } else {
+
+                connection.textContent =
+                    "🟡 WAITING FOR CSI";
+
+                connection.className =
+                    "status waiting";
+
+            }
+
+
+            /*
+             * MOVEMENT
+             */
+
+            const movement =
+                document.getElementById(
+                    "movement"
+                );
+
+
+            if (data.movement) {
+
+                movement.textContent =
+                    "🔴 MOVEMENT DETECTED";
+
+                movement.className =
+                    "status detected";
+
+            } else {
+
+                movement.textContent =
+                    "🔵 NO MOVEMENT";
+
+                movement.className =
+                    "status movement";
+
+            }
+
+
+            /*
+             * GRAPH DATA
+             */
+
+            addData(
+                Number(data.score),
+                Number(data.rssi)
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Dashboard error:",
+                error
+            );
+
+
+            const connection =
+                document.getElementById(
+                    "connection"
+                );
+
+
+            connection.textContent =
+                "🔴 CONNECTION ERROR";
+
+            connection.className =
+                "status error";
+
+        }
+
+    }
+
+
+    /*
+     * ==========================================
+     * START
+     * ==========================================
+     */
+
+    resizeGraphs();
+
+    updateDashboard();
+
+
+    /*
+     * Update every 300 ms
+     */
+
+    setInterval(
+        updateDashboard,
+        300
+    );
+
+</script>
+
+</body>
+
+</html>
