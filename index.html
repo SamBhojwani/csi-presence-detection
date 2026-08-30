@@ -491,7 +491,7 @@
 
         const max =
             Math.max(
-                20,
+                8,
                 ...scoreHistory
             );
 
@@ -652,13 +652,23 @@
                 );
 
 
-            if (data.frames > 0) {
+            if (data.frames > 0 && data.live) {
 
                 connection.textContent =
                     "🟢 CSI DATA AVAILABLE";
 
                 connection.className =
                     "status receiving";
+
+            } else if (data.frames > 0) {
+
+                /* Rows exist but nothing is writing them */
+                connection.textContent =
+                    "⚠️ CAPTURE STOPPED - data is "
+                    + data.age + "s old";
+
+                connection.className =
+                    "status error";
 
             } else {
 

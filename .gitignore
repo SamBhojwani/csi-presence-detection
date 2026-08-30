@@ -87,3 +87,6 @@ docs/docusaurus/website/node_modules
 **/managed_components/
 **/*.lock
 **/.vscode
+
+.capture.lock
+csi_capture.csv
